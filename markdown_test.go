@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thecodingmachine/gotenberg-go-client/v6/test"
+	"github.com/meateam/gotenberg-go-client/v6/test"
 )
 
 func TestMarkdown(t *testing.T) {

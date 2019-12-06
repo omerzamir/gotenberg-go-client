@@ -5,13 +5,13 @@ A simple Go client for interacting with a Gotenberg API.
 ## Install
 
 ```bash
-$ go get -u github.com/thecodingmachine/gotenberg-go-client/v6
+$ go get -u github.com/meateam/gotenberg-go-client/v6
 ```
 
 ## Usage
 
 ```golang
-import "github.com/thecodingmachine/gotenberg-go-client/v6"
+import "github.com/meateam/gotenberg-go-client/v6"
 
 func main() {
     // HTML conversion example.
