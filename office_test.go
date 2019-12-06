@@ -12,7 +12,10 @@ import (
 
 func TestOffice(t *testing.T) {
 	c := &Client{Hostname: "http://localhost:3000"}
-	req, err := NewOfficeRequest(test.OfficeTestFilePath(t, "document.docx"))
+	filename := "document.docx"
+	file, err := os.Open(test.OfficeTestFilePath(t, filename))
+	assert.Nil(t, err)
+	req, err := NewOfficeRequest(filename, file)
 	require.Nil(t, err)
 	req.ResultFilename("foo.pdf")
 	req.WaitTimeout(5)

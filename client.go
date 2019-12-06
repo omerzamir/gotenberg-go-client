@@ -72,16 +72,48 @@ func (req *request) formValues() map[string]string {
 // Post sends a request to the Gotenberg API
 // and returns the response.
 func (c *Client) Post(req Request) (*http.Response, error) {
-	body, contentType, err := multipartForm(req)
-	if err != nil {
-		return nil, err
+	officeRequest, ok := req.(*OfficeRequest)
+	var body io.Reader
+	contentType := ""
+	var err error = nil
+	if ok {
+		body, contentType, err = officeRequest.multipartForm()
+	} else {
+		body, contentType, err = multipartForm(req)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	URL := fmt.Sprintf("%s%s", c.Hostname, req.postURL())
 	resp, err := http.Post(URL, contentType, body) /* #nosec */
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
+}
+
+// StoreWriter copies the resulting PDF to given destination writer.
+func (c *Client) StoreWriter(req Request, dest io.Writer) error {
+	if hasWebhook(req) {
+		return errors.New("cannot use Store method with a webhook")
+	}
+	resp, err := c.Post(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("failed to generate the result PDF")
+	}
+
+	_, err = io.Copy(dest, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed storing file: %v", err)
+	}
+	
+	return nil
 }
 
 // Store creates the resulting PDF to given destination.
