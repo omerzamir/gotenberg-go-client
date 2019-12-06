@@ -15,6 +15,7 @@ const landscapeOffice string = "landscape"
 type OfficeRequest struct {
 	fileReader  io.Reader
 	filename    string
+	readerCopyBuffer []byte
 
 	*request
 }
@@ -25,7 +26,21 @@ func NewOfficeRequest(filename string, fileReader io.Reader) (*OfficeRequest, er
 		return nil, fmt.Errorf("file reader does not exist")
 	}
 
-	return &OfficeRequest{fileReader, filename, newRequest()}, nil
+	return &OfficeRequest{
+		fileReader: fileReader,
+		filename: filename,
+		readerCopyBuffer: nil,
+		request: newRequest(),
+	}, nil
+}
+
+// NewOfficeRequestWithBuffer create OfficeRequest.
+func NewOfficeRequestWithBuffer(filename string, fileReader io.Reader, readerCopyBuffer []byte) (*OfficeRequest, error) {
+	if fileReader == nil {
+		return nil, fmt.Errorf("file reader does not exist")
+	}
+
+	return &OfficeRequest{fileReader, filename, readerCopyBuffer, newRequest()}, nil
 }
 
 // Landscape sets landscape form field.
@@ -53,7 +68,12 @@ func (req *OfficeRequest) multipartForm() (io.Reader, string, error) {
 		return nil, "", fmt.Errorf("%s: creating form file: %v", req.filename, err)
 	}
 
-	_, err = io.Copy(part, req.fileReader)
+	if req.readerCopyBuffer != nil {
+		_, err = io.CopyBuffer(part, req.fileReader, req.readerCopyBuffer)
+	} else {
+		_, err = io.Copy(part, req.fileReader)
+	}
+
 	if err != nil {
 		return nil, "", fmt.Errorf("%s: copying file: %v", req.filename, err)
 	}
