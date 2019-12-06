@@ -22,7 +22,7 @@ type OfficeRequest struct {
 // NewOfficeRequest create OfficeRequest.
 func NewOfficeRequest(filename string, fileReader io.Reader) (*OfficeRequest, error) {
 	if fileReader == nil {
-		return nil, fmt.Errorf("file does not exist")
+		return nil, fmt.Errorf("file reader does not exist")
 	}
 
 	return &OfficeRequest{fileReader, filename, newRequest()}, nil
