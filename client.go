@@ -69,6 +69,17 @@ func (req *request) formValues() map[string]string {
 	return req.values
 }
 
+// Healthy returns true if the gotenberg server at c.Hostname is healthy, false otherwise.
+func (c *Client) Healthy() bool {
+	url := c.Hostname + "/ping"
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return false
+	}
+
+	return true
+}
+
 // Post sends a request to the Gotenberg API
 // and returns the response.
 func (c *Client) Post(req Request) (*http.Response, error) {
@@ -112,7 +123,7 @@ func (c *Client) StoreWriter(req Request, dest io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("failed storing file: %v", err)
 	}
-	
+
 	return nil
 }
 
