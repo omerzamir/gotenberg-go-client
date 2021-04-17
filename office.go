@@ -8,39 +8,27 @@ import (
 	"strconv"
 )
 
-const landscapeOffice string = "landscape"
+const (
+	landscapeOffice  string = "landscape"
+	pageRangesOffice string = "pageRanges"
+)
 
 // OfficeRequest facilitates Office documents
 // conversion with the Gotenberg API.
 type OfficeRequest struct {
-	fileReader  io.Reader
-	filename    string
+	docs []Document
 	readerCopyBuffer []byte
-
 	*request
 }
 
 // NewOfficeRequest create OfficeRequest.
-func NewOfficeRequest(filename string, fileReader io.Reader) (*OfficeRequest, error) {
-	if fileReader == nil {
-		return nil, fmt.Errorf("file reader does not exist")
-	}
-
-	return &OfficeRequest{
-		fileReader: fileReader,
-		filename: filename,
-		readerCopyBuffer: nil,
-		request: newRequest(),
-	}, nil
+func NewOfficeRequest(docs ...Document) *OfficeRequest {
+	return &OfficeRequest{docs, readerCopyBuffer:nil, newRequest()}
 }
 
 // NewOfficeRequestWithBuffer create OfficeRequest.
-func NewOfficeRequestWithBuffer(filename string, fileReader io.Reader, readerCopyBuffer []byte) (*OfficeRequest, error) {
-	if fileReader == nil {
-		return nil, fmt.Errorf("file reader does not exist")
-	}
-
-	return &OfficeRequest{fileReader, filename, readerCopyBuffer, newRequest()}, nil
+func NewOfficeRequestWithBuffer(docs ...Document,  readerCopyBuffer []byte) *OfficeRequest {
+	return &OfficeRequest{docs, readerCopyBuffer: readerCopyBuffer, newRequest()}
 }
 
 // Landscape sets landscape form field.
@@ -48,43 +36,22 @@ func (req *OfficeRequest) Landscape(isLandscape bool) {
 	req.values[landscapeOffice] = strconv.FormatBool(isLandscape)
 }
 
+// PageRanges sets pageRanges form field.
+func (req *OfficeRequest) PageRanges(ranges string) {
+	req.values[pageRangesOffice] = ranges
+}
+
 func (req *OfficeRequest) postURL() string {
 	return "/convert/office"
 }
 
-func (req *OfficeRequest) formFiles() map[string]string {
-	files := make(map[string]string)
-	files[req.filename] = req.filename
+func (req *OfficeRequest) formFiles() map[string]Document {
+	files := make(map[string]Document)
+	for _, doc := range req.docs {
+		files[doc.Filename()] = doc
+	}
 
 	return files
-}
-
-func (req *OfficeRequest) multipartForm() (io.Reader, string, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	defer writer.Close() // nolint: errcheck
-	part, err := writer.CreateFormFile("files", req.filename)
-	if err != nil {
-		return nil, "", fmt.Errorf("%s: creating form file: %v", req.filename, err)
-	}
-
-	if req.readerCopyBuffer != nil {
-		_, err = io.CopyBuffer(part, req.fileReader, req.readerCopyBuffer)
-	} else {
-		_, err = io.Copy(part, req.fileReader)
-	}
-
-	if err != nil {
-		return nil, "", fmt.Errorf("%s: copying file: %v", req.filename, err)
-	}
-
-	for name, value := range req.formValues() {
-		if err := writer.WriteField(name, value); err != nil {
-			return nil, "", fmt.Errorf("%s: writing form field: %v", name, err)
-		}
-	}
-
-	return body, writer.FormDataContentType(), nil
 }
 
 // Compile-time checks to ensure type implements desired interfaces.

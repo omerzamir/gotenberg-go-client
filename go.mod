@@ -1,4 +1,4 @@
-module github.com/meateam/gotenberg-go-client/v6
+module github.com/omerzamir/gotenberg-go-client/v7
 
 go 1.13
 
